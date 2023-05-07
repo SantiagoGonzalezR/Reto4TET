@@ -286,10 +286,16 @@ Ahora solo queda entrar al pánel de LB desde el menú de la izquierda y verific
 ![image](https://user-images.githubusercontent.com/68928428/236652735-2776a680-6601-4a6d-8dec-5971330b165c.png)
 
 
+# Problematicas encontradas
 
+## Superadas
+1. El auto-scaling group intentaba generar las instancias pero estas se caian, caimos en cuenta que esto ocurria porque ingresabamos informacion dentro del tab de User Data.
 
+2. Inicialmente no sabiamos como hacer que se conectaran a las diferentes instancias del moodle, eventualmente caimos en cuenta de que el balanceador de cargas tenia el DNS propio disponible para esta conexion.
 
+3. El EFS no conectaba, esto ocurrio porque el security group generado no tenia admitido el puerto por el cual se hacia la conexion.
 
+## No superadas
+1. No logramos encontrar un uso adecuado para el NFS, aunque si lo hallamos conectado.
 
-
-
+2. No contamos con el tiempo para encontrar y adquirir un dominio, pues el sistema de AWS no nos funcionaba y los dominios que teniamos anteriormente volvieron a no funcionar correctamente.
