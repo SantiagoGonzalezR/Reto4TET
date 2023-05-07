@@ -2,6 +2,7 @@
 # Reto 
 ## Integrantes
 Santiago Gonzalez Rodriguez
+
 Mariana Vasquez Escobar
 
 ## Descripcion del proyecto
@@ -164,3 +165,121 @@ Si despues de esto no se muestra la pagina reiniciaremos apache2 de la siguiente
 sudo docker exec reto4-moodle-container service apache2 restart
 sudo service apache2 restart
 ```
+#Auto-escalado
+
+Para el presente reto se utilizó la herramienta de Auto-scaling grpup, proporcionada por AWS. Para poder conformar un auto-scaling group es necesario seguir los siguientes pasos:
+
+##A. Crear una AMI
+
+A partir de una instancia creada previamente, ya dockerizada y conectada al NFS y a la base de datos, se creará una Amazon Machine Image (AMI) con el fin de tener una base para crear nuevas instancias sin tener que "poblar" cada una cada que se cree una nueva máquina.
+
+###Pasos para crear una AMI
+1. Entre a la consola EC2 de AWS donde se listan todas las instancias creadas, elija la instancia a partir de la cual desea crear la AMI y presione clic derecho sobre ella. 
+
+2. Vaya al apartado de "Images and Templates" y elija "Create Image".
+
+![image](https://user-images.githubusercontent.com/68928428/236651779-f3e39db6-98ec-478f-b3d0-1c970185e189.png)
+
+3. Será redirigido a la pantalla para crear AMI's. Dele un nombre y presione "Create image".
+
+![image](https://user-images.githubusercontent.com/68928428/236651821-16aed132-cc55-4da1-952d-a63b8ed48b7b.png)
+
+4. Remítase al menú de la izquierda de la pantalla e ingrese a la página de AMIs, donde podrá visualizar las Imágens previamente creadas, entre ellas, la que acaba de crear.
+
+![image](https://user-images.githubusercontent.com/68928428/236651851-8ba777cb-29b2-4bab-8e9e-7966f768c9cc.png)
+
+##B. Crear una Launch Template a partir de la AMI
+
+Los Auto-scaling groups generan nuevas instancias a medida que son demandadas a partir de una Launch Template.
+
+### Pasos para crear una Launch Template
+
+1. Remítase a la página de Launch Template a partir del menú de la izquierda de la consola de AWS y de clic en "Create Launch Template".
+
+![image](https://user-images.githubusercontent.com/68928428/236651941-60fe991c-83c5-4a5b-825b-8d7bf05427df.png)
+
+2. Dele un nombre.
+
+3. En el apartado de "Application and OS Images (Amazon Machine Image)" de clic en "My AMI's", luego en "Owned by me" y seleccione la AMI que acaba de crear.
+
+![image](https://user-images.githubusercontent.com/68928428/236651983-6d51d045-84f3-4a1e-b568-c07ba4c1a05d.png)
+
+4. Elija el mismo grupo de seguridad de la base de datos RDS.
+
+![image](https://user-images.githubusercontent.com/68928428/236652048-676ae448-4f65-4457-a972-d71013e0b939.png)
+
+5. Agregue un tag con un key value que recuerde, estos serán usados nuevamente para conectar con el Target Group y el balanceador de carga.
+
+![image](https://user-images.githubusercontent.com/68928428/236652081-b7f61721-39b7-48be-8b74-20a5577498c4.png)
+
+6. Clickee sobre "Create Launch Instance" luego de elegir las demás esoecificaciones de la instancia a crear.
+
+##C. Cree un grupo de Auto-scaling
+
+A partir de la plantilla creada, es posible crear un nuevo grupo de Auto-scaling. 
+
+###Pasos
+
+1. A través del menú de la izquierda, ingrese al apartado de "Auto-scaling groups" y dé clic en "Create auto-scaling group".
+
+![image](https://user-images.githubusercontent.com/68928428/236652250-4c72dc7e-dcd3-4d7e-9407-79290980e81f.png)
+
+2. Dele un nombre y seleccione la plantilla que quiere usar.
+
+![image](https://user-images.githubusercontent.com/68928428/236652262-3e55acf1-e8a4-48bc-8f0f-31d777906257.png)
+
+3. Elija las zonas en que estará disponible su AG.
+
+4. Vincúlelo a un Load Balancer nuevo, de tipo Application Load Balancer e Internet-facing.
+
+![image](https://user-images.githubusercontent.com/68928428/236652316-1902bc86-2688-480b-bcd6-5ab989bac522.png)
+
+5. Vincule el balanceador de carga a un nuevo Target Group y dele un nombre; el TG será configurado más adelante.
+
+![image](https://user-images.githubusercontent.com/68928428/236652346-27eef95a-a543-43bb-bca0-4cc7708ff20f.png)
+
+6. Asígnele al Load Balancer el mismo Tag (key y value) que se le dió a la plantilla anteriormente.
+
+![image](https://user-images.githubusercontent.com/68928428/236652375-60b2a7c5-216f-432a-a176-4c214ec96a56.png)
+
+7. Delimite la cantidad de máquinas del ASG si así lo desea.
+
+![image](https://user-images.githubusercontent.com/68928428/236652397-c0de782f-e23f-43be-a770-522187f12319.png)
+
+8. Nuevamente, asígnele el tag usado previamente para que las nuevas instancias sean creadas con dicho tag.
+
+![image](https://user-images.githubusercontent.com/68928428/236652411-b7fdfa65-f28c-4d2d-a39c-9be57a20de8c.png)
+
+9. En el apartado de review dé clic a "Create new auto-scaling group".
+
+![image](https://user-images.githubusercontent.com/68928428/236652428-a0228690-91be-4c7b-8959-a22e2c3357ea.png)
+
+10. Será remitido a la consola de ASG, dé clic en el que acaba de crear y e ingrese a la pestaña "Instance management", allí podrá observar las instancias que se crean automáticamente. En este caso se estipuló que la cantidad deseada de instancias sería de dos.
+
+![image](https://user-images.githubusercontent.com/68928428/236652546-92de65e7-1067-480f-8a13-ad8a331e2bbb.png)
+
+
+##D. Verifique un Target Group
+
+Si los tags fueron colocados correctamente, el Target group sabrá que debe apuntar a cada instancia creada automáticamente. A continuación, un vistazo al TG del reto 4, en el cual por fine de prueba se incluyó la instancia a partir de la cual se creó la AMI:
+
+![image](https://user-images.githubusercontent.com/68928428/236652669-a25c05d6-2fbe-4c02-9bf5-b3a95cfa9aa3.png)
+
+Si desea verificar los tags, puede ir a la respeciva pestaña:
+
+![image](https://user-images.githubusercontent.com/68928428/236652687-67b842d3-6cd3-425a-9021-2ec714b71c83.png)
+
+##E. Verificar el Load Balancer
+
+Ahora solo queda entrar al pánel de LB desde el menú de la izquierda y verificar que esté apuntando al target group correspondiente.
+
+![image](https://user-images.githubusercontent.com/68928428/236652735-2776a680-6601-4a6d-8dec-5971330b165c.png)
+
+
+
+
+
+
+
+
+
