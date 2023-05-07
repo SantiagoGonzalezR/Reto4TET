@@ -5,10 +5,20 @@ Santiago Gonzalez Rodriguez
 
 Mariana Vasquez Escobar
 
-## Descripcion del proyecto
+# Requerimientos del proyecto (previos)
+Contar con una cuenta educativa de AWS o los recursos económicos para costear la elaboración del proyecto. 
+
+# Análisis de la solución
+Los requisitos del proyecto estaban planteados de una manera muy específica en el enunciado del reto 4, siendo la única decisión creativa que tomamos el utilizar o no una imagen de docker desde DockerHub. Decidimos instalar apache y en este a su vez instalar Moodle, haciendo todas las conexiones al EFS y al RDS y posteriormente dockerizarlo, principalmente para aprender a hacerlo correctamente pues ya conocíamos cómo utilizar una imagen desde DockerHub.
+
+# Implementación
 Plataforma de moodle Dockerizada montada en AWS, junto a un balanceador de carga, un grupo de autoscaling para escalabilidad, una base de datos para la recoleccion de la informacion del moodle y un EFS, todos los servicios anteriores son brindados por AWS.
 
-# Como se realizo?
+# Diseño
+
+Se determinó un Auto-scaling group cuyo estado deseado fuera de dos instancias, su máximo fuera de 3 y su mínimo de 1. El auto-scaling group sería conectado a un Application Load Balancer que es Internet-facing a través de un target group que apunta al ASG. Cada una de las instancias está conectada a una misma base de datos y un mismo NFS. Puede ingresarse al sistema a través del DNS del Load Balancer.
+
+# Guía de uso
 ## Despliegue de moodle
 El proyecto lo empezamos creando una base de datos RDS tipo mySQL en AWS, un sistema EFS que servira como NFS, y una instancia en EC2 donde podremos montar el Moodle.
 Una vez entramos a la maquina del EC2 corremos los siguientes comandos:
@@ -165,15 +175,15 @@ Si despues de esto no se muestra la pagina reiniciaremos apache2 de la siguiente
 sudo docker exec reto4-moodle-container service apache2 restart
 sudo service apache2 restart
 ```
-#Auto-escalado
+# Auto-escalado
 
 Para el presente reto se utilizó la herramienta de Auto-scaling grpup, proporcionada por AWS. Para poder conformar un auto-scaling group es necesario seguir los siguientes pasos:
 
-##A. Crear una AMI
+## A. Crear una AMI
 
 A partir de una instancia creada previamente, ya dockerizada y conectada al NFS y a la base de datos, se creará una Amazon Machine Image (AMI) con el fin de tener una base para crear nuevas instancias sin tener que "poblar" cada una cada que se cree una nueva máquina.
 
-###Pasos para crear una AMI
+### Pasos para crear una AMI
 1. Entre a la consola EC2 de AWS donde se listan todas las instancias creadas, elija la instancia a partir de la cual desea crear la AMI y presione clic derecho sobre ella. 
 
 2. Vaya al apartado de "Images and Templates" y elija "Create Image".
@@ -188,7 +198,7 @@ A partir de una instancia creada previamente, ya dockerizada y conectada al NFS 
 
 ![image](https://user-images.githubusercontent.com/68928428/236651851-8ba777cb-29b2-4bab-8e9e-7966f768c9cc.png)
 
-##B. Crear una Launch Template a partir de la AMI
+## B. Crear una Launch Template a partir de la AMI
 
 Los Auto-scaling groups generan nuevas instancias a medida que son demandadas a partir de una Launch Template.
 
@@ -214,11 +224,11 @@ Los Auto-scaling groups generan nuevas instancias a medida que son demandadas a 
 
 6. Clickee sobre "Create Launch Instance" luego de elegir las demás esoecificaciones de la instancia a crear.
 
-##C. Cree un grupo de Auto-scaling
+## C. Cree un grupo de Auto-scaling
 
 A partir de la plantilla creada, es posible crear un nuevo grupo de Auto-scaling. 
 
-###Pasos
+### Pasos
 
 1. A través del menú de la izquierda, ingrese al apartado de "Auto-scaling groups" y dé clic en "Create auto-scaling group".
 
@@ -259,7 +269,7 @@ A partir de la plantilla creada, es posible crear un nuevo grupo de Auto-scaling
 ![image](https://user-images.githubusercontent.com/68928428/236652546-92de65e7-1067-480f-8a13-ad8a331e2bbb.png)
 
 
-##D. Verifique un Target Group
+## D. Verifique un Target Group
 
 Si los tags fueron colocados correctamente, el Target group sabrá que debe apuntar a cada instancia creada automáticamente. A continuación, un vistazo al TG del reto 4, en el cual por fine de prueba se incluyó la instancia a partir de la cual se creó la AMI:
 
@@ -269,7 +279,7 @@ Si desea verificar los tags, puede ir a la respeciva pestaña:
 
 ![image](https://user-images.githubusercontent.com/68928428/236652687-67b842d3-6cd3-425a-9021-2ec714b71c83.png)
 
-##E. Verificar el Load Balancer
+## E. Verificar el Load Balancer
 
 Ahora solo queda entrar al pánel de LB desde el menú de la izquierda y verificar que esté apuntando al target group correspondiente.
 
