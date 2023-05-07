@@ -6,6 +6,7 @@ Santiago Gonzalez Rodriguez
 Mariana Vasquez Escobar
 
 # Requerimientos del proyecto (previos)
+
 Contar con una cuenta educativa de AWS o los recursos económicos para costear la elaboración del proyecto. 
 
 # Análisis de la solución
@@ -15,6 +16,8 @@ Los requisitos del proyecto estaban planteados de una manera muy específica en 
 Plataforma de moodle Dockerizada montada en AWS, junto a un balanceador de carga, un grupo de autoscaling para escalabilidad, una base de datos para la recoleccion de la informacion del moodle y un EFS, todos los servicios anteriores son brindados por AWS.
 
 # Diseño
+
+![Untitled Diagram drawio (1)](https://user-images.githubusercontent.com/68928428/236653252-5b55f8c3-08a0-4638-a8e1-891e62e4b578.png)
 
 Se determinó un Auto-scaling group cuyo estado deseado fuera de dos instancias, su máximo fuera de 3 y su mínimo de 1. El auto-scaling group sería conectado a un Application Load Balancer que es Internet-facing a través de un target group que apunta al ASG. Cada una de las instancias está conectada a una misma base de datos y un mismo NFS. Puede ingresarse al sistema a través del DNS del Load Balancer.
 
